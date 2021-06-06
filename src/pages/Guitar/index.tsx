@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, InputValue, Chords, Notes, StartFretNumber, Strings, Button } from "./styles";
-import Skeleton from 'react-loading-skeleton';
+import LoadingSkeleton from "../components/LoadingSkeleton/";
 
 import API from "../../services/api";
 import { Chord, ResponseChordAPI } from "../../@types";
@@ -12,8 +12,9 @@ import { playChord } from "../../playchord";
 const App: React.FC = () => {
   const [chord, setChord] = useState({} as Chord);
   const [openGuitar, setOpenGuitar] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [chordName, setChordName] = useState("");
-  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [startFretNumber, setStartFretNumber] = useState(0);
 
   useEffect(() => {
@@ -39,16 +40,18 @@ const App: React.FC = () => {
         }
 
         setChord(newChord);
-        setOpenGuitar(true)
+        setOpenGuitar(true);
+        setLoading(false);
+        setErrorMessage("");
       } else {
-        setOpenGuitar(false)
-        setMessage("Não encontramos esse acorde! Verifique se digitou corretamente.");
+        setOpenGuitar(false);
+        setLoading(false);
+        setErrorMessage("Não encontramos esse acorde! Verifique se digitou corretamente.");
       }
     }
 
     fetchChordAPI();
   }, [chordName]);
-
 
   function getStartFretNumber(chord: Chord) {
     let indexFinger = chord.fingering.findIndex((f) => f === 1);
@@ -66,7 +69,9 @@ const App: React.FC = () => {
 
       let value = formatSearchChord(currentTarget.value);
 
-      setOpenGuitar(false)
+      setOpenGuitar(false);
+      setLoading(true);
+      setErrorMessage("");
       setChordName(value);
     }
   }
@@ -79,7 +84,7 @@ const App: React.FC = () => {
           searchChord(e);
         }}
       />
-      {openGuitar ? (
+      {openGuitar && (
         <>
           <Chords>
             <StartFretNumber fret={startFretNumber}>{startFretNumber}</StartFretNumber>
@@ -110,18 +115,17 @@ const App: React.FC = () => {
               </div>
             ))}
           </Notes>
+          <Button
+            onClick={() => {
+              playChord(chord.strings);
+            }}
+          >
+            Play Chord
+          </Button>
         </>
-      ) : (
-        <p className="message">{message}</p>
       )}
-      <Button
-        onClick={() => {
-          playChord(chord.strings);
-        }}
-      >
-        Play Chord
-      </Button>
-      {/* {chordName !== "" && <audio src={`https://www.scales-chords.com/chord-sounds/snd-guitar-chord-${chordName}.mp3`} controls></audio>} */}
+      {errorMessage && <p className="message">{errorMessage}</p>}
+      {loading && <LoadingSkeleton />}
     </Container>
   );
 };
