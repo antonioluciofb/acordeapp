@@ -35,7 +35,5 @@ export default function formatSearchChord(chord: string): string {
         chordFormmated += value;
     }
 
-    console.log(chordFormmated);
-
     return chordFormmated;
 }

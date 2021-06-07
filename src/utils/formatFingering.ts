@@ -1,6 +1,6 @@
-import { Chord } from "../@types";
+import { IChord } from "../@types";
 
-export default function formatFingering(chord: Chord, index: number) {
+export default function formatFingering(chord: IChord, index: number) {
     const isNumber = !isNaN((chord.fingering[index]));
 
     if(isNumber){

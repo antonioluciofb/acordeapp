@@ -1,13 +1,11 @@
-import { Chord } from "../@types";
+import { IChord } from "../@types";
 
-export default function formatStringsChord(chord: Chord): Chord {
+export default function formatStringsChord(chord: IChord): IChord {
 
     let array = chord.strings.map(s => isNaN(s) ? 0 : s);
 
     let maxItem = Math.max(...array);
 
-
-    console.log(maxItem);
 
     switch (maxItem) {
         case 5:

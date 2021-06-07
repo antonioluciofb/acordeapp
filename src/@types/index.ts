@@ -7,7 +7,7 @@ export interface ResponseChordAPI {
     tones: string;
   }
   
-export interface Chord {
+export interface IChord {
     strings: number[],
     fingering: number[],
     chordName: string,

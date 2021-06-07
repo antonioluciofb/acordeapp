@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Container, InputValue, Chords, Notes, StartFretNumber, Strings, Button } from "./styles";
+import { Container, InputValue, Notes, Button, ChordsSequency } from "./styles";
 import LoadingSkeleton from "../components/LoadingSkeleton/";
 
 import API from "../../services/api";
-import { Chord, ResponseChordAPI } from "../../@types";
+import { IChord, ResponseChordAPI } from "../../@types";
 import formatStringsChord from "../../utils/formatStringsChord";
 import formatSearchChord from "../../utils/formatSearchChord";
-import formatFingering from "../../utils/formatFingering";
 import { playChord } from "../../playchord";
+import { ChordInfo } from "./components/ChordInfo";
 
-const App: React.FC = () => {
-  const [chord, setChord] = useState({} as Chord);
+const Guitar: React.FC = () => {
+  const [chord, setChord] = useState({} as IChord);
   const [openGuitar, setOpenGuitar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [chordName, setChordName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [startFretNumber, setStartFretNumber] = useState(0);
+  const [selectedChords, setSelectedChords] = useState<IChord[]>([])
 
   useEffect(() => {
     async function fetchChordAPI() {
@@ -24,9 +24,8 @@ const App: React.FC = () => {
       const { data } = await API.get<ResponseChordAPI[]>(`${chordName}`);
 
       if (data.length > 0) {
-        setStartFretNumber(0);
 
-        let newChord: Chord = {
+        let newChord: IChord = {
           strings: data[0].strings.split(" ").map((s) => Number(s)),
           fingering: data[0].fingering.split(" ").map((f) => Number(f)),
           chordName: data[0].chordName,
@@ -34,8 +33,6 @@ const App: React.FC = () => {
         };
 
         if (newChord.strings.some((s) => s >= 5)) {
-          getStartFretNumber(newChord);
-
           newChord = formatStringsChord(newChord);
         }
 
@@ -53,12 +50,26 @@ const App: React.FC = () => {
     fetchChordAPI();
   }, [chordName]);
 
-  function getStartFretNumber(chord: Chord) {
+  const handleSelectedChords = (chord: IChord) => {
+    const findChord = selectedChords.find(chordItem => chordItem.chordName === chord.chordName)
+    let value
+
+    findChord ? 
+      value = selectedChords.filter(chordItem => chordItem.chordName !== chord.chordName)
+      : value = [...selectedChords, chord] 
+
+    setSelectedChords(value)
+    
+  }
+
+  function getStartFretNumber(chord: IChord): number {
     let indexFinger = chord.fingering.findIndex((f) => f === 1);
 
     if (indexFinger >= 0) {
-      setStartFretNumber(chord.strings[indexFinger]);
+      return chord.strings[indexFinger]
     }
+
+    return 0
   }
 
   function searchChord({ currentTarget, key }: React.KeyboardEvent<HTMLInputElement>) {
@@ -86,34 +97,13 @@ const App: React.FC = () => {
       />
       {openGuitar && (
         <>
-          <Chords>
-            <StartFretNumber fret={startFretNumber}>{startFretNumber}</StartFretNumber>
-            <Strings fret={chord.strings[0]} string="43px">
-              {formatFingering(chord, 0)}
-            </Strings>
-            <Strings fret={chord.strings[1]} string="71px">
-              {formatFingering(chord, 1)}
-            </Strings>
-            <Strings fret={chord.strings[2]} string="98px">
-              {formatFingering(chord, 2)}
-            </Strings>
-            <Strings fret={chord.strings[3]} string="125px">
-              {formatFingering(chord, 3)}
-            </Strings>
-            <Strings fret={chord.strings[4]} string="153px">
-              {formatFingering(chord, 4)}
-            </Strings>
-            <Strings fret={chord.strings[5]} string="181px">
-              {formatFingering(chord, 5)}
-            </Strings>
-          </Chords>
-
+          <ChordInfo chordData={chord} startFretNumber={getStartFretNumber(chord)} handleSelectedChords={handleSelectedChords} />
           <Notes>
-            {chord.tones.map((tone, i) => (
+              {chord.tones.map((tone, i) => (
               <div key={i} className="notes">
-                {tone}
+                  {tone}
               </div>
-            ))}
+              ))}
           </Notes>
           <Button
             onClick={() => {
@@ -126,8 +116,25 @@ const App: React.FC = () => {
       )}
       {errorMessage && <p className="message">{errorMessage}</p>}
       {loading && <LoadingSkeleton />}
+      <Button
+        onClick={() => {
+          playChord(chord.strings);
+        }}
+      >
+        Play Chord
+      </Button>
+      {/* {chordName !== "" && <audio src={`https://www.scales-chords.com/chord-sounds/snd-guitar-chord-${chordName}.mp3`} controls></audio>} */}
+    
+    {selectedChords.length > 0 && 
+      <ChordsSequency>
+        {console.log(selectedChords)}
+        {selectedChords.map((chord, index) => (
+          <ChordInfo key={index} chordData={chord} startFretNumber={getStartFretNumber(chord)} handleSelectedChords={handleSelectedChords} />
+        ))}
+      </ChordsSequency>
+    }
     </Container>
   );
 };
 
-export default App;
+export default Guitar;
